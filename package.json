@@ -4,7 +4,7 @@
   "description": "bucket is a rate-limiter that implements the token-bucket algorithm, built in TypeScript.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -13,15 +13,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/mohammednumaan/bucket/issues"
   },
   "homepage": "https://github.com/mohammednumaan/bucket#readme",
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/node": "^25.6.0",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.9",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
