@@ -23,14 +23,14 @@ export default class TokenBucket {
         const now = Date.now();
         const secondsElapsed = (now - this.lastRefillTimestamp) / 1000;
 
+
         if (secondsElapsed >= this.interval) {
             const intervalsCompleted = Math.floor(secondsElapsed / this.interval);
             const tokensToAdd = intervalsCompleted * this.refillRate;
-
             /*
              lets say:
              elapsed = 25
-             interval = 10
+             interval = 11
              refillRate = 5
              itervalsCompleted = 2
              tokensToAdd = 2 * 5 = 10

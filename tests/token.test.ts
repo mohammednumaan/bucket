@@ -31,5 +31,8 @@ describe('basic token bucket tests', () => {
        // so new token count should be 6
        jest.advanceTimersByTime(35000);
        expect(bucket.getTokens()).toBe(6);
+       
+       expect(bucket.consume(6)).toBe(true);
+       expect(bucket.getTokens()).toBe(0);
    })
 })
