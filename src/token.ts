@@ -5,6 +5,7 @@ export default class TokenBucket {
     private refillRate: number;
     private interval: number;
     private lastRefillTimestamp: number;
+    private lastUsedTimestamp: number;
 
     constructor(capacity: number, refillRate: number, interval: number) {
         this.capacity = capacity;
@@ -12,6 +13,7 @@ export default class TokenBucket {
         this.refillRate = refillRate;
         this.interval = interval;
         this.lastRefillTimestamp = Date.now();
+        this.lastUsedTimestamp = Date.now();
     }
 
     // this is a very interesting problem to solve
@@ -52,11 +54,20 @@ export default class TokenBucket {
         }
 
         this.tokens -= tokens;
+        this.lastUsedTimestamp = Date.now();
         return true;
+    }
+
+    public getLastRefill(): number {
+        return this.lastRefillTimestamp;
     }
 
     public getTokens(): number {
         this.refill();
         return this.tokens;
+    }
+
+    public getLastUsed(): number {
+        return this.lastUsedTimestamp;
     }
 }
