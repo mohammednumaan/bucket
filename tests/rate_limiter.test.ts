@@ -1,78 +1,67 @@
-import RateLimiter from '../src/rate_limiter'
+import Redis from "ioredis";
+import RateLimiter from "../src/rate_limiter";
 
-describe('basic rate limiter tests', () => {
-    let rl: RateLimiter;
-    const ip1 = "192.168.1.1";
-    const ip2 = "192.168.1.2";
+type RedisClient = ReturnType<typeof createRedisClient>;
 
-    beforeEach(() => {
-        rl = new RateLimiter(10, 2, 5);
-        jest.useFakeTimers();
-    })
+function createRedisClient() {
+  return new Redis();
+}
 
-    test('should return null for non-existent buckets', () => {
-        const nonExistentIp = "192.168.1.3";
-        expect(rl.getBucket(nonExistentIp)).toBeNull();
-    });
+describe("rate limiter", () => {
+  const key = "192.168.1.1";
+  const otherKey = "192.168.1.2";
 
-    test('should add new ips to the rate limiter on request', () => {
-        expect(rl.attemptRequest(ip1)).toBe(true);
-        expect(rl.getBucket(ip1)!.getTokens()).toBe(9);
+  let client: RedisClient;
+  let rateLimiter: RateLimiter;
 
-        expect(rl.attemptRequest(ip2)).toBe(true);
-        expect(rl.getBucket(ip2)!.getTokens()).toBe(9);
+  beforeEach(async () => {
+    client = createRedisClient();
+    await client.flushall();
+    rateLimiter = new RateLimiter(client, 10, 2, 5);
+  });
 
+  afterEach(() => {
+    jest.useRealTimers();
+    client.disconnect();
+  });
 
-        expect(rl.attemptRequest(ip1, 9)).toBe(true);
-        expect(rl.getBucket(ip1)!.getTokens()).toBe(0);
+  test("allows requests until bucket is exhausted", async () => {
+    await expect(rateLimiter.attemptRequest(key, 10)).resolves.toBe(true);
+    await expect(rateLimiter.attemptRequest(key, 1)).resolves.toBe(false);
+  });
 
-        expect(rl.attemptRequest(ip2, 9)).toBe(true);
-        expect(rl.getBucket(ip2)!.getTokens()).toBe(0);
-    });
+  test("keeps separate buckets per key", async () => {
+    await expect(rateLimiter.attemptRequest(key, 10)).resolves.toBe(true);
+    await expect(rateLimiter.attemptRequest(otherKey, 10)).resolves.toBe(true);
 
+    await expect(rateLimiter.attemptRequest(key, 1)).resolves.toBe(false);
+    await expect(rateLimiter.attemptRequest(otherKey, 1)).resolves.toBe(false);
+  });
 
-    test('should refill tokens correctly after the refill interval', () => {
-        expect(rl.attemptRequest(ip1, 8)).toBe(true);
-        expect(rl.attemptRequest(ip2, 10)).toBe(true);
+  test("refills tokens after the configured interval", async () => {
+    jest.useFakeTimers();
 
-        expect(rl.getBucket(ip1)!.getTokens()).toBe(2);
-        expect(rl.getBucket(ip2)!.getTokens()).toBe(0);
+    await expect(rateLimiter.attemptRequest(key, 10)).resolves.toBe(true);
+    await expect(rateLimiter.attemptRequest(key, 1)).resolves.toBe(false);
 
-        // secondsElapsed = 5
-        // intervalsComplete = 5 / 5 = 1
-        // tokensToAdd = 1 * 2 = 2
-        jest.advanceTimersByTime(5000);
-        expect(rl.getBucket(ip1)!.getTokens()).toBe(4);
-        expect(rl.getBucket(ip2)!.getTokens()).toBe(2);
+    jest.advanceTimersByTime(5000);
 
-        jest.advanceTimersByTime(10000);
-        expect(rl.getBucket(ip1)!.getTokens()).toBe(8);
-        expect(rl.getBucket(ip2)!.getTokens()).toBe(6);
-    });
+    await expect(rateLimiter.attemptRequest(key, 2)).resolves.toBe(true);
+    await expect(rateLimiter.attemptRequest(key, 1)).resolves.toBe(false);
+  });
 
-    test('should cleanup inactive buckets correctly', () => {
-        expect(rl.attemptRequest(ip1)).toBeTruthy();
-        expect(rl.attemptRequest(ip2)).toBeTruthy();
+  test("persists state across limiter instances", async () => {
+    jest.useFakeTimers();
+    await expect(rateLimiter.attemptRequest(key, 7)).resolves.toBe(true);
+    const anotherLimiter = new RateLimiter(client, 10, 2, 5);
 
-        jest.advanceTimersByTime(60 * 1000);
-        rl.cleanup();
-        expect(rl.getBucket(ip1)).toBeTruthy();
-        expect(rl.getBucket(ip2)).toBeTruthy();
+    await expect(anotherLimiter.attemptRequest(key, 4)).resolves.toBe(false);
+    await expect(anotherLimiter.attemptRequest(key, 3)).resolves.toBe(true);
 
-        jest.advanceTimersByTime(60 * 3 * 1000);
-        rl.cleanup();
-        expect(rl.getBucket(ip1)).toBeTruthy();
-        expect(rl.getBucket(ip2)).toBeTruthy();
+    jest.advanceTimersByTime(5000);
+    await expect(anotherLimiter.attemptRequest(key, 2)).resolves.toBe(true);
+    await expect(anotherLimiter.attemptRequest(key, 1)).resolves.toBe(false);
+    await expect(rateLimiter.attemptRequest(key, 1)).resolves.toBe(false);
 
-        jest.advanceTimersByTime(60 * 1000);
-        rl.cleanup();
-        expect(rl.getBucket(ip1)).toBeTruthy();
-        expect(rl.getBucket(ip2)).toBeTruthy();
-
-        jest.advanceTimersByTime(60 * 1000);
-        rl.cleanup();
-        expect(rl.getBucket(ip1)).toBeNull();
-        expect(rl.getBucket(ip2)).toBeNull();
- 
-    });
-})
+  });
+});

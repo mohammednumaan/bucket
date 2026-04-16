@@ -1,43 +1,36 @@
-import TokenBucket from "./token";
+import { Redis } from "ioredis";
+import TokenBucketManager, { Bucket } from "./token";
 
 export default class RateLimiter {
 
-    private buckets: Map<string, TokenBucket> = new Map();
+    private client: Redis;
     private capacity: number;
     private refillRate: number;
     private interval: number;
-    private cleanUpInterval: number = 60 * 5;
+    constructor(client: Redis, capacity: number, refillRate: number, interval: number){
 
-    constructor(capacity: number, refillRate: number, interval: number){
+        this.client = client;
         this.capacity = capacity;
         this.refillRate = refillRate;
         this.interval = interval;
     }
 
-    public attemptRequest(key: string, tokens: number = 1): boolean {
-        let bucket = this.buckets.get(key);
+    public async attemptRequest(key: string, tokens: number = 1){
+        const redisData = await this.client.hgetall(key);
+        let bucket = TokenBucketManager.toBucket(redisData);
 
-        if (!bucket){
-            bucket = new TokenBucket(this.capacity, this.refillRate, this.interval);
-            this.buckets.set(key, bucket);
+        let isNewBucket = false;
+
+        if (!bucket) {
+            bucket = new Bucket(this.capacity, this.refillRate, this.interval);
+            isNewBucket = true;
         }
 
-        return bucket.consume(tokens);
-    }
-
-    public getBucket(key: string): TokenBucket | null {
-        return this.buckets.get(key) || null;
-    }
-
-    // a simple cleanup function (TTL-based) that removes buckets after 5 minutes
-    // of inactivity to prevent memory leaks
-    public cleanup(): void {
-        const now = Date.now();
-        for (const [key, bucket] of this.buckets){
-            const timeElapsedSeconds = (now - bucket.getLastUsed()) / 1000;
-            if (timeElapsedSeconds > this.cleanUpInterval){
-                this.buckets.delete(key);
-            }
+        const allowed = TokenBucketManager.consume(bucket, tokens);
+        if (allowed || isNewBucket) {
+            await this.client.hset(key, bucket);
         }
+        
+        return allowed;
     }
 }

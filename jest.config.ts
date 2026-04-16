@@ -11,6 +11,7 @@ const config: Config.InitialOptions = {
         }
     ],
   },
+  setupFilesAfterEnv: ["./jest.config.ioredis-mock.ts"],
 };
 
 export default config;
