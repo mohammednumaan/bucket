@@ -16,7 +16,8 @@ export default class RateLimiter {
     }
 
     public async attemptRequest(key: string, tokens: number = 1){
-        const redisData = await this.client.hgetall(key);
+        const redisKey = `rate_limiter:${key}`;
+        const redisData = await this.client.hgetall(redisKey);
         let bucket = TokenBucketManager.toBucket(redisData);
 
         let isNewBucket = false;
@@ -28,7 +29,7 @@ export default class RateLimiter {
 
         const allowed = TokenBucketManager.consume(bucket, tokens);
         if (allowed || isNewBucket) {
-            await this.client.hset(key, bucket);
+            await this.client.hset(redisKey, bucket);
         }
         
         return allowed;

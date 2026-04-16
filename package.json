@@ -4,7 +4,8 @@
   "description": "bucket is a rate-limiter that implements the token-bucket algorithm, built in TypeScript.",
   "main": "index.js",
   "scripts": {
-    "test": "jest ./tests/rate_limiter.test.ts"
+    "test": "jest",
+    "dev": "tsx watch src/app.ts"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/mohammednumaan/bucket#readme",
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
     "jest": "^30.3.0",
@@ -28,6 +30,7 @@
     "typescript": "^6.0.2"
   },
   "dependencies": {
+    "express": "^5.2.1",
     "ioredis": "^5.10.1",
     "ioredis-mock": "^8.13.1"
   }
