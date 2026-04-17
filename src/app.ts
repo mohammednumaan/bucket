@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const rateLimitMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-    const key = req.ip;
+    const key = req.ip!.toString();
     const allowed = await rateLimiter.attemptRequest(key, 1);
 
     if (!allowed){

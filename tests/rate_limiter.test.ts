@@ -1,21 +1,16 @@
-import Redis from "ioredis";
-import RateLimiter from "../src/rate_limiter";
+import { Redis } from "ioredis";
+import RateLimiter from "../src/rate_limiter.js";
 
-type RedisClient = ReturnType<typeof createRedisClient>;
-
-function createRedisClient() {
-  return new Redis();
-}
 
 describe("rate limiter", () => {
   const key = "192.168.1.1";
   const otherKey = "192.168.1.2";
 
-  let client: RedisClient;
+  let client: Redis;
   let rateLimiter: RateLimiter;
 
   beforeEach(async () => {
-    client = createRedisClient();
+    client = new Redis();
     await client.flushall();
     rateLimiter = new RateLimiter(client, 10, 2, 5);
   });

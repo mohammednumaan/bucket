@@ -1,5 +1,5 @@
 import { Redis } from "ioredis";
-import TokenBucketManager, { Bucket } from "./token";
+import TokenBucketManager, { Bucket } from "./token.js";
 
 export default class RateLimiter {
 

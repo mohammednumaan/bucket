@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "dev": "tsx watch src/app.ts"
+    "dev": "tsx watch src/app.ts",
+    "start": "node dist/src/app.js",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
