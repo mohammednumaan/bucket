@@ -1,0 +1,33 @@
+services:
+  server1:
+    build: .
+    hostname: server1
+    ports:
+      - '81:3000'
+
+  server2:
+    build: .
+    hostname: server2
+    ports:
+      - '82:3000'
+
+  server3:
+    build: .
+    hostname: server3
+    ports:
+      - '83:3000'
+
+  redis:
+    image: 'redis:alpine'
+    ports:
+      - '6379:6379'
+
+  nginx:
+    build: ./nginx
+    ports:
+      - '80:80'
+
+    depends_on:
+      - server1
+      - server2
+      - server3
