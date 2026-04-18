@@ -1,5 +1,4 @@
 import TokenBucketManager, { Bucket } from "../src/token.js";
-
 describe('basic token bucket tests', () => {
 
    let bucket: Bucket;

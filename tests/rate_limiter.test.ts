@@ -1,4 +1,4 @@
-import { Redis } from "ioredis";
+import Redis from "ioredis";
 import RateLimiter from "../src/rate_limiter.js";
 
 
@@ -17,7 +17,6 @@ describe("rate limiter", () => {
 
   afterEach(() => {
     jest.useRealTimers();
-    client.disconnect();
   });
 
   test("allows requests until bucket is exhausted", async () => {

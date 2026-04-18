@@ -11,7 +11,14 @@ const config: Config.InitialOptions = {
         }
     ],
   },
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   setupFilesAfterEnv: ["./jest.config.ioredis-mock.ts"],
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/dist/",
+  ],
 };
 
 export default config;

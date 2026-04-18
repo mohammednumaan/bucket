@@ -35,4 +35,3 @@ app.get('/api/test', rateLimitMiddleware, (req: Request, res: Response) => {
 app.listen(PORT, () => {
     console.log(`[Server] running on port ${PORT}`);
 });
-
