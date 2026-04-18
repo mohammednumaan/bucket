@@ -4,10 +4,12 @@
   "description": "bucket is a rate-limiter that implements the token-bucket algorithm, built in TypeScript.",
   "main": "index.js",
   "scripts": {
+    "test:unit": "jest tests/unit --runInBand",
     "test:integration": "jest tests/integration --runInBand",
     "dev": "tsx watch src/app.ts",
     "start": "node dist/src/app.js",
-    "build": "tsc && cp -r lua dist/lua"
+    "build": "tsc && cp -r lua dist/lua",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",

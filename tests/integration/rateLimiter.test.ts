@@ -2,14 +2,19 @@ import request from "supertest";
 import app from "../../src/app.js";
 import redisClient from "../../src/redis.js";
 
+
+afterAll(async () => {
+    await redisClient.flushall();
+    await redisClient.quit();
+});
+
 describe("rate limiter - lua edge cases", () => {
     beforeEach(async () => {
         await redisClient.flushall();
     });
 
-    afterAll(async () => {
+    afterEach(async () => {
         await redisClient.flushall();
-        await redisClient.quit();
     });
 
     test("denies a request that asks for more tokens than capacity", async () => {

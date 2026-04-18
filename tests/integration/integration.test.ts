@@ -2,14 +2,18 @@ import request from "supertest";
 import app from "../../src/app.js";
 import redisClient from "../../src/redis.js";
 
+afterAll(async () => {
+  await redisClient.flushall();
+  await redisClient.quit();
+});
+
 describe("rate limiter integration", () => {
   beforeEach(async () => {
     await redisClient.flushall();
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await redisClient.flushall();
-    await redisClient.quit();
   });
 
   test("returns 401 when x-api-key is missing", async () => {

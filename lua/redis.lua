@@ -4,6 +4,19 @@ local refillRate = tonumber(ARGV[2])
 local interval = tonumber(ARGV[3])
 local requested = tonumber(ARGV[4])
 
+if not capacity or capacity <= 0 then
+    return { -1, 0, 0 }
+end
+if not refillRate or refillRate <= 0 then
+    return { -1, 0, 0 }
+end
+if not interval or interval <= 0 then
+    return { -1, 0, 0 }
+end
+if not requested or requested < 0 or requested ~= math.floor(requested) then
+    return { -1, 0, 0 }
+end
+
 local intervalMs = interval * 1000
 local time = redis.call('TIME')
 local nowMs = (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
