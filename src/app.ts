@@ -4,6 +4,7 @@ import os from "os";
 import redisClient from "./redis.js";
 import RateLimiter from "./rate_limiter/rateLimiter.js";
 import { useRateLimiterMiddleware } from "./middleware/rateLimiter.js";
+import { errorHandlerMiddleware } from "./middleware/errorHandler.js";
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -22,6 +23,8 @@ app.get("/api/test", useRateLimiterMiddleware(rateLimiter), (_req: Request, res:
   const hostname = os.hostname();
   res.json({ message: `${hostname}: Request successful!` });
 });
+
+app.use(errorHandlerMiddleware);
 
 export default app;
 

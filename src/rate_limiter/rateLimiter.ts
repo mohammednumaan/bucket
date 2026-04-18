@@ -10,9 +10,11 @@ type RateLimiterConfig = {
 
 export default class RateLimiter {
   private readonly bucket: TokenBucket;
+  public readonly capacity: number;
 
   constructor(store: RedisTokenBucketClient, config: RateLimiterConfig) {
     this.bucket = new TokenBucket(store, config);
+    this.capacity = config.capacity;
   }
 
   async attemptRequest(key: string, tokens: number = 1) {

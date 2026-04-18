@@ -8,6 +8,7 @@ describe("rate limiter integration", () => {
   });
 
   afterAll(async () => {
+    await redisClient.flushall();
     await redisClient.quit();
   });
 
@@ -88,4 +89,29 @@ describe("rate limiter integration", () => {
     expect(allowed).toBe(10);
     expect(limited).toBe(total - 10);
   }, 15000);
+
+  test("sets a TTL on the bucket key so it expires when fully refilled", async () => {
+    const key = "expiry-test-user";
+
+    await request(app).get("/api/test").set("x-api-key", key);
+
+    const ttl = await redisClient.ttl(`rl:${key}`);
+
+    expect(ttl).toBeGreaterThan(0);
+    expect(ttl).toBeLessThanOrEqual(26);
+  });
+
+  test("removes the token from Redis once TTL passes", async () => {
+    const key = "expiry-deletion-test";
+
+    await request(app).get("/api/test").set("x-api-key", key);
+
+    let exists = await redisClient.exists(`rl:${key}`);
+    expect(exists).toBe(1);
+
+    await new Promise((resolve) => setTimeout(resolve, 27000));
+
+    exists = await redisClient.exists(`rl:${key}`);
+    expect(exists).toBe(0); 
+  }, 35000);
 });

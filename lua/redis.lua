@@ -36,4 +36,7 @@ end
 
 redis.call('HMSET', key, 'tokens', tokens, 'lastRefillTimestamp', lastRefillTimestamp, 'lastUsedTimestamp', nowMs)
 
+local ttl = math.ceil((capacity / refillRate) * interval) + 1
+redis.call('EXPIRE', key, ttl)
+
 return { allowed, tokens } 
