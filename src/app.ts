@@ -23,6 +23,10 @@ app.get("/api/test", useRateLimiterMiddleware(rateLimiter), (_req: Request, res:
   res.json({ message: `${hostname}: Request successful!` });
 });
 
-app.listen(PORT, () => {
-  console.log(`[Server] running on port ${PORT}`);
-});
+export default app;
+
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`[Server] running on port ${PORT}`);
+  });
+}

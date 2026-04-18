@@ -1,10 +1,17 @@
 import type {Config} from '@jest/types';
 
 const config: Config.InitialOptions = {
+  testEnvironment: "node",
+  extensionsToTreatAsEsm: [".ts"],
   transform: {
     "^.+\\.tsx?$": [
         "ts-jest", 
         {
+            useESM: true,
+            tsconfig: {
+              module: "NodeNext",
+              moduleResolution: "NodeNext",
+            },
             diagnostics: {
                 ignoreCodes: [151002],
             }
@@ -14,7 +21,6 @@ const config: Config.InitialOptions = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  setupFilesAfterEnv: ["./jest.config.ioredis-mock.ts"],
   testPathIgnorePatterns: [
     "/node_modules/",
     "/dist/",
