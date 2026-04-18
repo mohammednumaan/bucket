@@ -1,37 +1,36 @@
-import TokenBucketManager, { Bucket } from "../src/token.js";
-describe('basic token bucket tests', () => {
+import RateLimiter from "../src/rate_limiter.js";
+import Redis from "ioredis";
+import type { RedisTokenBucketClient } from "../src/redis.js";
 
-   let bucket: Bucket;
-   beforeEach(() => {
-       bucket = new Bucket(10, 2, 10);
-       jest.useFakeTimers();
-    })
+describe("rate limiter defaults", () => {
+  let client: RedisTokenBucketClient;
 
-   test('should allow requests upto the maximum capacity', () => {
-       expect(TokenBucketManager.consume(bucket, 5)).toBe(true);
-       expect(TokenBucketManager.consume(bucket, 5)).toBe(true);
-       expect(TokenBucketManager.consume(bucket, 1)).toBe(false);
-    });
+  beforeEach(async () => {
+    client = new Redis() as unknown as RedisTokenBucketClient;
+    await client.flushall();
+  });
 
-   test('should not allow consuming more tokens than available', () => {
-       expect(TokenBucketManager.consume(bucket, 20)).toBe(false);
-       expect(TokenBucketManager.consume(bucket, 10)).toBe(true);
-       expect(TokenBucketManager.consume(bucket, 3)).toBe(false);
-    });
+  afterEach(async () => {
+    await client.quit();
+  });
 
-   test('should refill tokens after some time correctly', () => {
+  test("uses one token when request size is omitted", async () => {
+    const consumeToken = jest.fn().mockResolvedValue([1, 9]);
+    client.consumeToken = consumeToken;
+    const rateLimiter = new RateLimiter(client, 10, 2, 5);
 
-       expect(TokenBucketManager.getTokens(bucket)).toBe(10);
-       TokenBucketManager.consume(bucket, 10);
-       expect(TokenBucketManager.getTokens(bucket)).toBe(0);
+    await expect(rateLimiter.attemptRequest("192.168.1.1")).resolves.toBe(true);
 
-       // now that i advanced the time by 35s
-       // the bucket should have refilled (35/10) * 2 = floor(3.5) = 3 * 2 = 6 tokens 
-       // so new token count should be 6
-       jest.advanceTimersByTime(35000);
-       expect(TokenBucketManager.getTokens(bucket)).toBe(6);
-        
-       expect(TokenBucketManager.consume(bucket, 6)).toBe(true);
-       expect(TokenBucketManager.getTokens(bucket)).toBe(0);
-    })
-})
+    expect(consumeToken).toHaveBeenCalledWith("rate_limiter:192.168.1.1", 10, 2, 5, 1);
+  });
+
+  test("uses the provided request size", async () => {
+    const consumeToken = jest.fn().mockResolvedValue([1, 7]);
+    client.consumeToken = consumeToken;
+    const rateLimiter = new RateLimiter(client, 10, 2, 5);
+
+    await expect(rateLimiter.attemptRequest("192.168.1.1", 3)).resolves.toBe(true);
+
+    expect(consumeToken).toHaveBeenCalledWith("rate_limiter:192.168.1.1", 10, 2, 5, 3);
+  });
+});
