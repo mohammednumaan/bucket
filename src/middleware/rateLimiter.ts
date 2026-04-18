@@ -20,6 +20,7 @@ export function useRateLimiterMiddleware(rateLimiter: RateLimiter) {
             res.setHeader('X-RateLimit-Remaining', result.remaining);
 
             if (!result.allowed) {
+                res.setHeader('Retry-After', result.retryAfter);
                 res.status(429).json({
                     error: 'rate limit exceeded',
                     remaining: result.remaining
@@ -32,3 +33,4 @@ export function useRateLimiterMiddleware(rateLimiter: RateLimiter) {
         }
     }
 }
+

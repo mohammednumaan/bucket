@@ -57,4 +57,22 @@ describe("rate limiter - lua edge cases", () => {
         const response = await request(app).get("/api/test").set("x-api-key", key);
         expect(response.status).toBe(200);
     });
+
+    test("returns Retry-After and rate limit headers on 429", async () => {
+        const key = "headers-test-user";
+
+        for (let i = 0; i < 10; i++) {
+            await request(app).get("/api/test").set("x-api-key", key);
+        }
+
+        const response = await request(app).get("/api/test").set("x-api-key", key);
+
+        expect(response.status).toBe(429);
+        expect(response.headers["x-ratelimit-limit"]).toBe("10");
+        expect(response.headers["x-ratelimit-remaining"]).toBe("0");
+
+        const retryAfter = parseInt(response.headers["retry-after"], 10);
+        expect(retryAfter).toBeGreaterThanOrEqual(1);
+        expect(retryAfter).toBeLessThanOrEqual(5);
+    });
 });

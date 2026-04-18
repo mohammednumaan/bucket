@@ -18,7 +18,6 @@ if not tokens then
 
 else 
     local secondsElapsed = (nowMs - lastRefillTimestamp) / 1000;
-
     if (secondsElapsed >= interval) then
         local intervalsCompleted = math.floor(secondsElapsed / interval)
         local tokensToAdd = intervalsCompleted * refillRate
@@ -39,4 +38,13 @@ redis.call('HMSET', key, 'tokens', tokens, 'lastRefillTimestamp', lastRefillTime
 local ttl = math.ceil((capacity / refillRate) * interval) + 1
 redis.call('EXPIRE', key, ttl)
 
-return { allowed, tokens } 
+if allowed == 0 then
+    local needed = requested - tokens
+    local intervalsNeeded = math.ceil(needed / refillRate)
+    local resetMs = lastRefillTimestamp + (intervalsNeeded * intervalMs)
+    local retryAfter = math.ceil((resetMs - nowMs) / 1000)
+    if retryAfter < 0 then retryAfter = 0 end
+    return { allowed, tokens, retryAfter }
+end
+
+return { allowed, tokens, 0} 

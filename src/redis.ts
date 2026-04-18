@@ -9,7 +9,7 @@ export interface RedisTokenBucketClient extends Redis {
     refillRate: number,
     intervalSeconds: number,
     requested: number
-  ): Promise<[number, number]>;
+  ): Promise<[number, number, number]>;
 }
 
 const scriptPath = path.resolve(process.cwd(), "lua", "redis.lua");
