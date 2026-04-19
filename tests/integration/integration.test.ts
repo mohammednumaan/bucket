@@ -16,10 +16,10 @@ describe("rate limiter integration", () => {
     await redisClient.flushall();
   });
 
-  test("returns 401 when x-api-key is missing", async () => {
+  test("returns 400 when x-api-key is missing", async () => {
     const response = await request(app).get("/api/test");
 
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "missing x-api-key header" });
   });
 
